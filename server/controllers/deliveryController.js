@@ -1,148 +1,70 @@
-
 const fetchTimeSlots = async (req, res) => {
-    const {
-        bookingDate = "20-06-2024",
-        bookingTime = "173000",
-        trainDate = "22-06-2024",
-        trainTime = "193000",
-    } = req.body;
 
-    const slots = {
-        morning: [8, 9],
-        evening: [15, 16]
-    }
-    let timeSlots = {
-        slot1: "date",
-        slot2: "date",
-        slot3: "date",
-    }
+    const { trainArrival = "2024-06-22T23:00:00", bookingDateTime = "2024-06-21T15:30:00" } = req.body;
+    const availableSlots = getAvailableSlots(trainArrival, bookingDateTime);
+    console.log(availableSlots);
 
-    let year = 2024, month = 6, date = 22, trainH = 19, trainM = 30
-    let noOfSlots = 3
+    function getAvailableSlots(trainArrival, bookingDateTime) {
+        const trainTime = new Date(trainArrival);
+        const bookingTime = new Date(bookingDateTime);
+        const slots = [];
 
-    if (trainH > evening[1]) {
-        both
-    }
-    else {
-        morning
-    }
+        const definedSlots = ["08:00-11:00", "19:00-22:00"];
 
-    // 2024-06-22T19:30:00
-    function findDeliverySlots(trainArrival) {
-        // Available delivery slots
-        const slots = ["08:00-11:00", "16:00-23:00"];
-        const numSlotsNeeded = 3;
-
-        // Parse the train arrival time
-        const trainArrivalDate = new Date(trainArrival);
-
-        // Function to format date in yyyy-mm-dd
-        function formatDate(date) {
+        function createSlot(date, slot) {
             let d = date.getDate();
             let m = date.getMonth() + 1;
             let y = date.getFullYear();
-            return `${y}-${m < 10 ? '0' + m : m}-${d < 10 ? '0' + d : d}`;
+            const [startHours, startMinutes] = slot.split("-")[0].split(":").map(Number);
+            const slotStart = new Date(y, date.getMonth(), d, startHours - 1, startMinutes);
+            const [hours, minutes] = slot.split("-")[1].split(":").map(Number);
+            const slotEnd = new Date(date);
+            slotEnd.setHours(hours + 1, minutes)
+            console.log(d)
+
+            return [`${y}-${m < 10 ? '0' + m : m}-${d < 10 ? '0' + d : d} ${slot}`, slotStart, slotEnd];
         }
 
-        // Find previous days' slots
-        let deliverySlots = [];
-        for (let i = 0; i <= 7; i++) {
-            let previousDate = new Date(trainArrivalDate);
-            previousDate.setDate(trainArrivalDate.getDate() - i);
-            console.log("p", previousDate)
-            let daySlots = slots.map(slot => {
-                if (i == 0) {
-                    //   if(){}
-                }
-                return `${formatDate(previousDate)} ${slot}`
-            });
-            deliverySlots.push(...daySlots);
-            console.log("d", daySlots, deliverySlots)
-
-            if (deliverySlots.length >= numSlotsNeeded) {
-                break;
+        function addSlot(date, slot) {
+            const [newSlot, slotStart, slotEnd] = createSlot(date, slot);
+            if (bookingTime <= slotStart && trainTime >= slotEnd) {
+                slots.push(newSlot);
             }
+
+            console.log(bookingTime <= slotStart, trainTime >= slotEnd, slotStart, slotEnd)
         }
 
-        // Return the last 3 slots
-        return deliverySlots.slice(0, numSlotsNeeded);
+        let currentDate = new Date(trainTime);
+        while (slots.length < 3) {
+            console.log(slots)
+            addSlot(currentDate, definedSlots[1]);
+            addSlot(currentDate, definedSlots[0]);
+            currentDate.setDate(currentDate.getDate() - 1); // Move to the previous day
+            if (currentDate < bookingTime) break;
+        }
+
+        return slots.slice(0, 3);
     }
 
-    // Example usage
-    const trainArrival = "2024-06-22T19:30:00";
-    console.log(findDeliverySlots(trainArrival));
+    if (availableSlots.length) {
+        res.status(200).send({
+            success: true,
+            availableSlots
+        })
+    }
+    else {
+        res.status(200).send({
+            success: true,
+            message: "No Slots Available"
+        })
+    }
 
     // [
-    //     '2024-06-22 08:00-09:00',
-    //     '2024-06-22 15:00-16:00',
-    //     '2024-06-21 08:00-09:00'
-    //  ]
-
-
-
-    res.status(200).send({
-        success: true,
-        timeSlots
-    })
+    //     '2024-06-22 19:00-22:00',
+    //     '2024-06-22 08:00-11:00',
+    //     '2024-06-21 19:00-22:00'
+    // ]
 
 }
 
-module.exports = { deliveryController };
-
-
-
-
-
-
-
-
-// 2024-06-22T19:30:00
-function getAvailableSlots(trainArrival) {
-    const trainTime = new Date(trainArrival);
-    const slots = [];
-
-    // Define the two daily slots
-    // const morningSlot = { start: "08:00", end: "11:00" };
-    // const eveningSlot = { start: "16:00", end: "23:00" };
-    const defindSlots = ["08:00-11:00", "16:00-23:00"];
-
-    // Helper function to create a Date object for a specific time on a given day
-    function createSlot(date, slot) {
-        const [hours, minutes] = slot.split("-")[1].split(":").map(Number);
-        // return new Date(date.getFullYear(), date.getMonth(), date.getDate(), hours, minutes);
-        let d = date.getDate();
-        let m = date.getMonth() + 1;
-        let y = date.getFullYear();
-        let slotEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate(), hours, minutes);
-        return [`${y}-${m < 10 ? '0' + m : m}-${d < 10 ? '0' + d : d} ${slot}`, slotEnd];
-    }
-
-    // Helper function to add a slot if it is before the train time
-    function addSlot(date, slot) {
-        const [newSlot, slotEnd] = createSlot(date, slot);
-        // const slotEnd = createSlot(date, slot.end);
-        if (slotEnd <= trainTime) {
-            slots.push(newSlot);
-        }
-    }
-
-    // Start from the day of the train's arrival and go backwards
-    let currentDate = new Date(trainTime);
-    while (slots.length < 3) {
-        addSlot(currentDate, defindSlots[0]);
-        addSlot(currentDate, defindSlots[1]);
-        currentDate.setDate(currentDate.getDate() - 1); // Move to the previous day
-    }
-
-    // Return the first three valid slots
-    return slots.slice(0, 3);
-}
-
-// Example usage
-const trainArrival = "2024-06-22T23:00:00"; // Example train arrival time
-const availableSlots = getAvailableSlots(trainArrival);
-console.log(availableSlots)
-
-// availableSlots.forEach(slot => {
-//     console.log(`Start: ${slot.start}, End: ${slot.end}`);
-// });
+module.exports = { fetchTimeSlots };
