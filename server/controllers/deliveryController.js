@@ -70,9 +70,29 @@ const fetchTimeSlots = async (req, res) => {
 
 const storeDeliveryDetails = async (req, res) => {
     try {
-        const { societyAddress, city, state, pincode, trainNumber, PNR, coachNumber, seatNumber, arrivalTime, departureTime, slot, pickUpDate } = req.body.deliveryDetails;
+        const {
+            societyAddress,
+            city,
+            state,
+            pincode,
+            trainNumber,
+            PNR,
+            coachNumber,
+            seatNumber,
+            arrivalTime,
+            departureTime,
+            slot,
+            pickUpDate,
+        } = req.body.deliveryDetails;
         const pickUpAddress = { societyAddress, city, state, pincode };
-        const deliveryAddress = { trainNumber, PNR, coachNumber, seatNumber, arrivalTime, departureTime };
+        const deliveryAddress = {
+            trainNumber,
+            PNR,
+            coachNumber,
+            seatNumber,
+            arrivalTime,
+            departureTime,
+        };
         const pickUpSlot = { date: pickUpDate, slot };
 
         const delivery = new Delivery({
@@ -80,23 +100,23 @@ const storeDeliveryDetails = async (req, res) => {
             pickUpAddress,
             deliveryAddress,
             pickUpSlot,
-            ...req.body.deliveryDetails
+            ...req.body.deliveryDetails,
         });
         const newDelivery = await delivery.save();
 
         res.status(200).send({
             success: true,
             message: "New delivery added successfully",
-            newDelivery
+            newDelivery,
         });
     } catch (error) {
         res.status(500).send({
             success: false,
             message: "error in adding new delivery",
-            error
-        })
+            error,
+        });
     }
-}
+};
 
 
 module.exports = { fetchTimeSlots, deliveryController };
