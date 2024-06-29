@@ -31,6 +31,7 @@ try {
   console.log("Exiting the process");
 }
 
+
 app.use("/api/auth", authRouter);
 app.use("/api/profile", profileRouter);
 app.use("/api/testimonial", testimonialRouter);
