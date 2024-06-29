@@ -18,7 +18,7 @@ const getProfileController = async (req, res) => {
     }
 }
 
-const editProfielController = async (req, res) => {
+const editProfileController = async (req, res) => {
     try {
         const { newData, email } = req.body;
         const profileData = {}
@@ -48,4 +48,4 @@ const editProfielController = async (req, res) => {
     }
 }
 
-module.exports = { getProfileController, editProfielController };
+module.exports = { getProfileController, editProfileController };
